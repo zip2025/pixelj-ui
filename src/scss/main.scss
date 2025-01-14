@@ -1,0 +1,32 @@
+$bootstrap-icons-font-dir: "bootstrap-icons/font/fonts";
+
+@import "_variables.scss";
+@import 'bootstrap/scss/bootstrap.scss';
+@import 'bootstrap-icons/font/bootstrap-icons.scss';
+
+.cursor {
+  cursor: pointer;
+}
+
+.text-small {
+  font-size: 0.8rem;
+}
+
+.bi-1_25x {
+  font-size: 125%;
+}
+.bi-1_5x {
+  font-size: 150%;
+}
+.bi-2x {
+  font-size: 200%;
+}
+.bi-3x {
+  font-size: 300%;
+}
+.bi-4x {
+  font-size: 400%;
+}
+.bi-5x {
+  font-size: 500%;
+}
