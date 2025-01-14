@@ -1,8 +1,8 @@
 <template>
   <div v-if="loading">LOADING....</div>
   <div class="container-fluid mx-2 mt-2">
-    <div class="row">
-      <div class="col-6">
+    <div class="d-flex gap-4 mb-2">
+      <div class="d-flex gap-0">
         <button class="btn btn-sm btn-secondary" @click="toggleFavourites()">Favourites</button>
         <button class="btn btn-sm btn-secondary" @click="toggleRated()">Rated</button>
         <button class="btn btn-sm btn-secondary" @click="toggleUnrated()">Unrated</button>
@@ -21,7 +21,16 @@
         </div>
       </div>
       <div class="col-6">
-        <pre>{{ createQuery(filter) }}</pre>
+        <div class="d-flex">
+          <div>{{ createQuery(filter) }}</div>
+          <div class="bg-light d-flex gap-2 mx-4">
+            <div>Index: {{ selectedIndex }}</div>
+            <div>Page: {{ page.number + 1 }} / {{ page.totalPages }}</div>
+            <div>
+              <button class="btn btn-sm btn-link" @click="resetPage()">Reset Page</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -31,14 +40,57 @@
 
     <div id="media-container" tabindex="1" v-on:keyup="keyup" v-if="!page.empty">
       <div class="w-100 d-flex align-items-center">
-        <ThumbnailBand :page="page" @select="select"/>
-        <div class="bg-light d-flex flex-column gap-2 mx-4">
-          <div>Index: {{ selectedIndex }}</div>
-          <div>Page: {{ page.number + 1 }} / {{ page.totalPages }}</div>
-          <div>
-            <button class="btn btn-sm btn-link" @click="resetPage()">Reset Page</button>
+        <Thumbnails :page="page" @select="select" @page="updatePage"/>
+
+        <div>
+          <!-- Rating -->
+          <div class="d-flex flex-row">
+            <div class="h2 p-0 d-flex gap-4 mx-4">
+              <span class="cursor"
+                    :class="{'text-primary': selectedMedia?.rating?.vote == 'UP'}"
+                    @click="upVote(selectedMedia!)">
+                <i class="bi bi-plus-circle bi-2x"></i>
+              </span>
+              <span class="cursor"
+                    :class="{'text-danger': selectedMedia?.rating?.favourite}"
+                    @click="markFav(selectedMedia!)">
+                <i class="bi bi-2x"
+                   :class="{'bi-heart-fill': selectedMedia?.rating?.favourite,'bi-heart': !selectedMedia?.rating?.favourite}"></i>
+              </span>
+              <span class="cursor"
+                    :class="{'text-primary': selectedMedia?.rating?.vote == 'DOWN'}"
+                    @click="downVote(selectedMedia!)">
+                <i class="bi bi-dash-circle bi-2x"></i>
+              </span>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mx-4">
+            <span class="cursor" @click="navigateLeft"><i class="bi bi-arrow-left bi-2x"></i></span>
+            <a v-if="selectedMedia.fullsizePath != ''"
+               :href="'http://localhost:8080/api/media/' + selectedMedia.id + '/fullsize'"
+               target="_blank"
+               class="btn btn-link"
+               role="button"><i class="bi bi-cloud-download bi-2x"></i>
+            </a>
+            <span class="cursor" @click="navigateRight"><i class="bi bi-arrow-right bi-2x"></i></span>
           </div>
         </div>
+
+        <div>
+          <!-- Original Id -->
+            <span class="badge rounded-pill text-bg-danger mb-2">
+              <a target="_blank" class="text-bg-danger"
+                 :href="'https://pr0gramm.com/new/' + selectedMedia.ref.id">id: {{ selectedMedia.ref.id }}</a>
+            </span>
+          <!-- Tags -->
+          <div class="d-flex flex-wrap gap-2">
+            <span v-for="tag in selectedMedia.tags"
+                class="badge rounded-pill text-bg-secondary cursor" @click="addTag(tag.tag)">
+            {{ tag.tag }}
+          </span>
+          </div>
+        </div>
+
       </div>
 
       <div v-if="selectedMedia" class="media-content">
@@ -46,7 +98,7 @@
            :href="'http://localhost:8080/api/media/' + selectedMedia.id + '/fullsize'"
            target="_blank"
            class="btn btn-link"
-           role="button"><i class="bi bi-plus-circle bi-3x"></i>
+           role="button"><i class="bi bi-cloud-download bi-3x"></i>
         </a>
         <video v-if="selectedMedia?.contentPath.endsWith('.mp4')"
                :key="selectedMedia.id"
@@ -123,9 +175,9 @@
 <script setup lang="ts">
 import {URLS} from "../utils/urls.ts";
 import {Cache, type Media, type Page, Vote} from "../utils/model.ts";
-import {onMounted, onUnmounted, ref} from "vue";
+import {onMounted, ref} from "vue";
 import {useRoute, useRouter} from "vue-router";
-import ThumbnailBand from "./ThumbnailBand.vue";
+import Thumbnails from "./Thumbnails.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -141,7 +193,7 @@ const page = ref<Page<Media>>({
   last: false,
   number: 0,
   totalPages: 0,
-  size: 10,
+  size: 8,
   totalElements: 0
 });
 
@@ -233,15 +285,22 @@ const patchVote = (media: Media, vote: Vote) => {
       });
 }
 
+const updatePage = (p: Page<Media>) => {
+  page.value = p;
+  reloadAndSelectFirst();
+}
+
 const nextPage = () => {
   page.value.number++;
-  reloadAndReset()
+  reloadAndSelectFirst()
 }
 
 const previousPage = () => {
   page.value.number--;
   reload((page) => {
-    select(page.content[page.size - 1])
+    if (!page.empty) {
+      select(page.content[page.size - 1])
+    }
   });
 }
 
@@ -274,7 +333,7 @@ const toggleFavourites = () => {
     filter.value.favouritesOnly = !filter.value.favouritesOnly;
   }
   page.value.number = 0
-  reloadAndReset()
+  reloadAndSelectFirst()
 }
 
 const toggleRated = () => {
@@ -284,7 +343,7 @@ const toggleRated = () => {
     filter.value.rated = !filter.value.rated;
   }
   page.value.number = 0
-  reloadAndReset()
+  reloadAndSelectFirst()
 }
 
 const toggleUnrated = () => {
@@ -294,7 +353,7 @@ const toggleUnrated = () => {
     filter.value.unrated = !filter.value.unrated;
   }
   page.value.number = 0
-  reloadAndReset()
+  reloadAndSelectFirst()
 }
 
 const togglePromoted = () => {
@@ -304,7 +363,7 @@ const togglePromoted = () => {
     filter.value.promoted = !filter.value.promoted;
   }
   page.value.number = 0
-  reloadAndReset()
+  reloadAndSelectFirst()
 }
 
 const addTag = (tag: string) => {
@@ -318,28 +377,31 @@ const addTag = (tag: string) => {
     }
   }
   page.value.number = 0
-  reloadAndReset()
+  reloadAndSelectFirst()
 }
 
 const removeTag = (tag: string) => {
   if (filter.value.tags) {
     const index = filter.value.tags.indexOf(tag);
     filter.value.tags.splice(index, 1)
+    if (filter.value.tags.length == 0) {
+      delete filter.value['tags']
+    }
   }
   page.value.number = 0
-  reloadAndReset()
+  reloadAndSelectFirst()
 }
 
 const clearFilter = () => {
   filter.value = {};
   cache.clear(createQuery(filter.value))
-  reloadAndReset()
+  reloadAndSelectFirst()
 }
 
 const resetPage = () => {
   page.value.number = 0;
   cache.clear('')
-  reloadAndReset()
+  reloadAndSelectFirst()
 }
 
 const createQuery = (filter: {[key: string] : any}): string => {
@@ -350,9 +412,11 @@ const createQuery = (filter: {[key: string] : any}): string => {
   return params.toString()
 }
 
-const reloadAndReset = () => {
+const reloadAndSelectFirst = () => {
   reload((page) => {
-    select(page.content[0])
+    if (!page.empty) {
+      select(page.content[0])
+    }
   });
 }
 

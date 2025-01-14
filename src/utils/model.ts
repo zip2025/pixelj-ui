@@ -12,6 +12,24 @@ export type Page<T> = PageRequest & {
     content: T[]
 }
 
+export function nextPage(page: Page<T>): Page<T> {
+    const currentPage = page.number;
+    const totalPages = page.totalPages;
+    if (currentPage + 1 == totalPages) {
+        return page;
+    }
+    return {...page, number: page.number + 1}
+}
+
+export function previousPage(page: Page<T>): Page<T> {
+    const currentPage = page.number;
+    if (currentPage == 0) {
+        return page;
+    }
+    return {...page, number: page.number - 1}
+}
+
+
 export type PageRequest = {
     // the size of the page
     size: number

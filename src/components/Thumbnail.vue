@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type {Media} from "@/utils/model.ts";
-import {ref} from "vue";
+import {ref, watch} from "vue";
 
-defineProps<{
+const props = defineProps<{
   value: Media
 }>()
 
@@ -24,6 +24,13 @@ const onError = (element: any) => {
   element.target.src = 'https://placehold.co/100?text=X'
   element.error = null;
 }
+
+watch(() => props.value, (oldValue, newValue) => {
+  if (oldValue.id != newValue.id) {
+    showImage.value = false;
+  }
+})
+
 </script>
 
 <template>
@@ -33,7 +40,9 @@ const onError = (element: any) => {
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-    <img :alt="value?.tags[0]?.tag"
+    <img
+        :key="value.id"
+        :alt="value?.tags[0]?.tag"
          style="max-height: 100%; width:100%; height: 100%"
          v-show="showImage"
          @load="onLoad"
