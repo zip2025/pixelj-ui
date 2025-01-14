@@ -51,6 +51,7 @@ export type Media = {
     ref: Ref
     contentPath: string
     thumbnailPath: string
+    fullsizePath: string
     downloaded: boolean
     tagged: boolean
     tags: MediaTag[]

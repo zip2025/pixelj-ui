@@ -11,81 +11,102 @@
             filter.promoted ? 'New' : 'Top'
           }}
         </button>
+        <input type="text"
+               @keyup.enter="event => addTag(event.target.value)">
+        <div class="d-flex gap-2">
+          <span v-for="filterTag in filter.tags">
+            {{filterTag}}
+            <button class="btn btn-link btn-sm text-danger" @click="removeTag(filterTag)">X</button>
+          </span>
+        </div>
       </div>
       <div class="col-6">
-        <pre>{{ pretty(filter) }}</pre>
+        <pre>{{ createQuery(filter) }}</pre>
       </div>
     </div>
 
-    <div class="w-100 d-flex align-items-center" id="media-container">
-      <div class="media-preview" v-for="media in page.content" @click="select(media)">
-        <img style="max-height: 100%; width:100%; height: 100%"
-             :src="'http://localhost:8080/api/media/' + media.id + '/thumbnail'">
-      </div>
-      <div class="bg-light d-flex flex-column gap-2 mx-4">
-        <div>Index: {{ selectedIndex }}</div>
-        <div>Page: {{ page.number + 1 }} / {{ page.totalPages }}</div>
-        <div><button class="btn btn-sm btn-link" @click="resetPage()">Reset Page</button></div>
-      </div>
+    <div v-if="page.empty" class="">
+      Keine Ergebnisse
     </div>
 
-    <div v-if="selectedMedia" class="media-content">
-      <video v-if="selectedMedia.contentPath.endsWith('.mp4')"
-             :key="selectedMedia.id"
-             class="item-image-actual"
+    <div id="media-container" tabindex="1" v-on:keyup="keyup" v-if="!page.empty">
+      <div class="w-100 d-flex align-items-center">
+        <ThumbnailBand :page="page" @select="select"/>
+        <div class="bg-light d-flex flex-column gap-2 mx-4">
+          <div>Index: {{ selectedIndex }}</div>
+          <div>Page: {{ page.number + 1 }} / {{ page.totalPages }}</div>
+          <div>
+            <button class="btn btn-sm btn-link" @click="resetPage()">Reset Page</button>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="selectedMedia" class="media-content">
+        <a v-if="selectedMedia.fullsizePath != ''"
+           :href="'http://localhost:8080/api/media/' + selectedMedia.id + '/fullsize'"
+           target="_blank"
+           class="btn btn-link"
+           role="button"><i class="bi bi-plus-circle bi-3x"></i>
+        </a>
+        <video v-if="selectedMedia?.contentPath.endsWith('.mp4')"
+               :key="selectedMedia.id"
+               class="item-image-actual"
+               draggable="true"
+               controls
+               height="100%"
+               width="auto"
+               loop autoplay
+               preload="auto">
+          <source :src="'http://localhost:8080/api/media/' + selectedMedia.id">
+        </video>
+        <img v-else :src="'http://localhost:8080/api/media/' + selectedMedia.id"
              draggable="true"
-             controls
-             height="100%"
-             width="auto"
-             loop=""
-             autoplay=""
-             preload="auto">
-        <source :src="'http://localhost:8080/api/media/' + selectedMedia.id">
-      </video>
-      <img v-else :src="'http://localhost:8080/api/media/' + selectedMedia.id"
-           draggable="true"
-           style="max-height: 100%; width: auto; height: 100%"
-           alt="image of media">
+             style="max-height: 100%; width: auto; height: 100%"
+             alt="image of media">
+      </div>
     </div>
-  </div>
     <div v-if="selectedMedia" class="">
       <!-- Rating -->
       <div class="h2 p-0 d-flex gap-4 m-4">
-        <span class="cursor"
-            :class="{'text-primary': selectedMedia?.rating?.vote == 'UP'}"
-            @click="upVote(selectedMedia!)">
-          <i class="bi bi-plus-circle"></i>
-        </span>
+          <span class="cursor"
+                :class="{'text-primary': selectedMedia?.rating?.vote == 'UP'}"
+                @click="upVote(selectedMedia!)">
+            <i class="bi bi-plus-circle"></i>
+          </span>
         <span class="cursor"
               :class="{'text-danger': selectedMedia?.rating?.favourite}"
               @click="markFav(selectedMedia!)">
-            <i class="bi" :class="{'bi-heart-fill': selectedMedia?.rating?.favourite,'bi-heart': !selectedMedia?.rating?.favourite}"></i>
-        </span>
+              <i class="bi"
+                 :class="{'bi-heart-fill': selectedMedia?.rating?.favourite,'bi-heart': !selectedMedia?.rating?.favourite}"></i>
+          </span>
         <span class="cursor"
               :class="{'text-primary': selectedMedia?.rating?.vote == 'DOWN'}"
               @click="downVote(selectedMedia!)">
-          <i class="bi bi-dash-circle"></i>
-        </span>
+            <i class="bi bi-dash-circle"></i>
+          </span>
       </div>
 
       <div>
         <!-- Original Id -->
         <div class="d-flex gap-2">
-        <span class="badge rounded-pill text-bg-danger">
-          <a target="_blank" class="text-bg-danger" :href="'https://pr0gramm.com/new/' + selectedMedia.ref.id">id: {{ selectedMedia.ref.id }}</a>
-        </span>
+          <span class="badge rounded-pill text-bg-danger">
+            <a target="_blank" class="text-bg-danger"
+               :href="'https://pr0gramm.com/new/' + selectedMedia.ref.id">id: {{ selectedMedia.ref.id }}</a>
+          </span>
         </div>
         <!-- Tags -->
         <div class="d-flex flex-wrap gap-2">
-        <span v-for="tag in selectedMedia.tags" class="badge rounded-pill text-bg-secondary">
-        {{ tag.tag }}
-        </span>
+          <span v-for="tag in selectedMedia.tags"
+                class="badge rounded-pill text-bg-secondary cursor" @click="addTag(tag.tag)">
+          {{ tag.tag }}
+          </span>
         </div>
       </div>
     </div>
     <div v-if="selectedMedia" class="bg-light">
       <pre class="text-sm">{{ pretty(selectedMedia) }}</pre>
-    </div>
+      </div>
+  </div>
 </template>
 
 <style scoped>
@@ -97,20 +118,14 @@
   margin-bottom: 10px;
   min-height: 100px;
 }
-
-.media-preview {
-  margin: 0px 2px 2px 0px;
-  display: inline-block;
-  width: 128px;
-  height: 128px;
-}
 </style>
 
 <script setup lang="ts">
 import {URLS} from "../utils/urls.ts";
 import {Cache, type Media, type Page, Vote} from "../utils/model.ts";
-import {onMounted, ref} from "vue";
+import {onMounted, onUnmounted, ref} from "vue";
 import {useRoute, useRouter} from "vue-router";
+import ThumbnailBand from "./ThumbnailBand.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -130,12 +145,12 @@ const page = ref<Page<Media>>({
   totalElements: 0
 });
 
-window.addEventListener("keyup", (e) => {
+const keyup = (event: any) => {
   if (loading.value) {
     // Bail if we are still loading
     return;
   }
-  switch (e.key) {
+  switch (event.key) {
     case 'w':
       if (selectedMedia.value) {
         upVote(selectedMedia.value)
@@ -157,7 +172,11 @@ window.addEventListener("keyup", (e) => {
     case 'd':
       navigateRight();
   }
-});
+}
+
+// window.addEventListener("keyup", (e) => {
+//
+// });
 
 const pretty = (input: any) => {
   return JSON.stringify(input, null, 2);
@@ -216,9 +235,7 @@ const patchVote = (media: Media, vote: Vote) => {
 
 const nextPage = () => {
   page.value.number++;
-  reload((page) => {
-    select(page.content[0])
-  });
+  reloadAndReset()
 }
 
 const previousPage = () => {
@@ -257,7 +274,7 @@ const toggleFavourites = () => {
     filter.value.favouritesOnly = !filter.value.favouritesOnly;
   }
   page.value.number = 0
-  reload((page) => select(page.content[0]))
+  reloadAndReset()
 }
 
 const toggleRated = () => {
@@ -267,7 +284,7 @@ const toggleRated = () => {
     filter.value.rated = !filter.value.rated;
   }
   page.value.number = 0
-  reload((page) => select(page.content[0]))
+  reloadAndReset()
 }
 
 const toggleUnrated = () => {
@@ -277,7 +294,7 @@ const toggleUnrated = () => {
     filter.value.unrated = !filter.value.unrated;
   }
   page.value.number = 0
-  reload((page) => select(page.content[0]))
+  reloadAndReset()
 }
 
 const togglePromoted = () => {
@@ -287,17 +304,42 @@ const togglePromoted = () => {
     filter.value.promoted = !filter.value.promoted;
   }
   page.value.number = 0
-  reload((page) => select(page.content[0]))
+  reloadAndReset()
+}
+
+const addTag = (tag: string) => {
+  if (!tag || tag.length < 3) return;
+  if (!filter.value.tags) {
+    filter.value.tags = []
+  }
+  if (filter.value.tags) {
+    if (filter.value.tags.indexOf(tag) == -1) {
+      filter.value.tags.push(tag);
+    }
+  }
+  page.value.number = 0
+  reloadAndReset()
+}
+
+const removeTag = (tag: string) => {
+  if (filter.value.tags) {
+    const index = filter.value.tags.indexOf(tag);
+    filter.value.tags.splice(index, 1)
+  }
+  page.value.number = 0
+  reloadAndReset()
 }
 
 const clearFilter = () => {
   filter.value = {};
-  reload((page) => select(page.content[0]))
+  cache.clear(createQuery(filter.value))
+  reloadAndReset()
 }
 
 const resetPage = () => {
   page.value.number = 0;
-  reload((page) => select(page.content[0]))
+  cache.clear('')
+  reloadAndReset()
 }
 
 const createQuery = (filter: {[key: string] : any}): string => {
@@ -306,6 +348,12 @@ const createQuery = (filter: {[key: string] : any}): string => {
     params.set(key, (filter as any)[key])
   })
   return params.toString()
+}
+
+const reloadAndReset = () => {
+  reload((page) => {
+    select(page.content[0])
+  });
 }
 
 const reload = (consumer?: (page: Page<Media>) => void) => {
