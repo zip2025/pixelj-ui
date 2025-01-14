@@ -12,7 +12,7 @@ export type Page<T> = PageRequest & {
     content: T[]
 }
 
-export function nextPage(page: Page<T>): Page<T> {
+export function nextPage<T>(page: Page<T>): Page<T> {
     const currentPage = page.number;
     const totalPages = page.totalPages;
     if (currentPage + 1 == totalPages) {
@@ -21,7 +21,7 @@ export function nextPage(page: Page<T>): Page<T> {
     return {...page, number: page.number + 1}
 }
 
-export function previousPage(page: Page<T>): Page<T> {
+export function previousPage<T>(page: Page<T>): Page<T> {
     const currentPage = page.number;
     if (currentPage == 0) {
         return page;
@@ -60,22 +60,27 @@ export type MediaTag = {
     confidence: number
 }
 
+export type MediaSource = {
+    favourite: boolean
+    promoted: boolean
+    imageUrl: string
+    thumbnailUrl: string
+    fullsizeUrl: string
+    previewUrl: string
+}
+
 export type Media = {
     id: number
     creationTime: Date
     crawlTime: Date
     tagTime: Date
-    promoted: boolean
     ref: Ref
-    contentPath: string
-    thumbnailPath: string
-    fullsizePath: string
+    source: MediaSource
     downloaded: boolean
     tagged: boolean
     tags: MediaTag[]
     rating?: MediaRating
     deleted: boolean
-    markedForDeletion: boolean
 }
 
 // // TODO MVR remove?!

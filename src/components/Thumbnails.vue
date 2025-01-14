@@ -14,14 +14,14 @@ const select = (media: Media) => {
   emit('select', media);
 }
 
-const navigateLeft = (p: Page) => {
+const navigateLeft = (p: Page<Media>) => {
   const newPage = previousPage(p);
   if (newPage.number != p.number) {
     emit('page', newPage);
   }
 }
 
-const navigateRight = (p: Page) => {
+const navigateRight = (p: Page<Media>) => {
   const newPage = nextPage(p);
   if (newPage.number != p.number) {
     emit('page', newPage);

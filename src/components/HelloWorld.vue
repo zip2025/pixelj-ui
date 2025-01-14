@@ -8,7 +8,7 @@
         <button class="btn btn-sm btn-secondary" @click="toggleUnrated()">Unrated</button>
         <button class="btn btn-sm btn-secondary" @click="clearFilter()">Clear</button>
         <button class="btn btn-sm btn-secondary" @click="togglePromoted()">{{
-            filter.promoted ? 'New' : 'Top'
+            filter.source_promoted ? 'New' : 'Top'
           }}
         </button>
         <input type="text"
@@ -66,7 +66,7 @@
           </div>
           <div class="d-flex justify-content-between mx-4">
             <span class="cursor" @click="navigateLeft"><i class="bi bi-arrow-left bi-2x"></i></span>
-            <a v-if="selectedMedia.fullsizePath != ''"
+            <a v-if="selectedMedia.source.fullsizeUrl != ''"
                :href="'http://localhost:8080/api/media/' + selectedMedia.id + '/fullsize'"
                target="_blank"
                class="btn btn-link"
@@ -94,13 +94,13 @@
       </div>
 
       <div v-if="selectedMedia" class="media-content">
-        <a v-if="selectedMedia.fullsizePath != ''"
+        <a v-if="selectedMedia.source.fullsizeUrl != ''"
            :href="'http://localhost:8080/api/media/' + selectedMedia.id + '/fullsize'"
            target="_blank"
            class="btn btn-link"
            role="button"><i class="bi bi-cloud-download bi-3x"></i>
         </a>
-        <video v-if="selectedMedia?.contentPath.endsWith('.mp4')"
+        <video v-if="selectedMedia?.source.imageUrl.endsWith('.mp4')"
                :key="selectedMedia.id"
                class="item-image-actual"
                draggable="true"
@@ -185,7 +185,7 @@ const route = useRoute();
 const loading = ref<boolean>(true);
 const selectedIndex = ref();
 const selectedMedia = ref<Media>();
-const filter = ref<{ [key: string]: any }>({promoted: false});
+const filter = ref<{ [key: string]: any }>({source_promoted: false});
 const page = ref<Page<Media>>({
   first: true,
   empty: true,
@@ -265,7 +265,7 @@ const patchFav = (media: Media, fav: boolean) => {
   fetch(`http://localhost:8080/api/media/${media.id}/vote?fav=${fav}`, requestOptions)
       .then(result => result.json())
       .then(rating => {
-        if (selectedMedia.value && selectedMedia.value.rating) {
+        if (selectedMedia.value) {
           selectedMedia.value.rating = rating;
         }
       });
@@ -327,10 +327,10 @@ const navigateRight = () => {
 }
 
 const toggleFavourites = () => {
-  if (filter.value['favouritesOnly'] == undefined) {
-    filter.value.favouritesOnly = true;
+  if (filter.value['source_favourite'] == undefined) {
+    filter.value.source_favourite = true;
   } else {
-    filter.value.favouritesOnly = !filter.value.favouritesOnly;
+    filter.value.source_favourite = !filter.value.source_favourite;
   }
   page.value.number = 0
   reloadAndSelectFirst()
@@ -357,10 +357,10 @@ const toggleUnrated = () => {
 }
 
 const togglePromoted = () => {
-  if (filter.value['promoted'] == undefined) {
-    filter.value['promoted'] = false;
+  if (filter.value['source_promoted'] == undefined) {
+    filter.value['source_promoted'] = false;
   } else {
-    filter.value.promoted = !filter.value.promoted;
+    filter.value.source_promoted = !filter.value.source_promoted;
   }
   page.value.number = 0
   reloadAndSelectFirst()
