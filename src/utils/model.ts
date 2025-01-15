@@ -12,6 +12,19 @@ export type Page<T> = PageRequest & {
     content: T[]
 }
 
+export const createPage = <T>(size: number) => {
+    return <Page<T>>{
+        content: [],
+        size: size,
+        first: true,
+        empty: true,
+        last: false,
+        number: 0,
+        totalPages: 0,
+        totalElements: 0
+    }
+}
+
 export function nextPage<T>(page: Page<T>): Page<T> {
     const currentPage = page.number;
     const totalPages = page.totalPages;
@@ -28,7 +41,6 @@ export function previousPage<T>(page: Page<T>): Page<T> {
     }
     return {...page, number: page.number - 1}
 }
-
 
 export type PageRequest = {
     // the size of the page
@@ -71,9 +83,9 @@ export type MediaSource = {
 
 export type Media = {
     id: number
-    creationTime: Date
-    crawlTime: Date
-    tagTime: Date
+    creationTime: number[]
+    crawlTime: number[]
+    tagTime: number[]
     ref: Ref
     source: MediaSource
     downloaded: boolean
@@ -132,5 +144,27 @@ export class Cache<T> {
 
     matchesId(id: string): boolean {
         return id == this.id;
+    }
+}
+
+export class Queue {
+    public currentIndex = 0;
+
+    constructor(public items: Media[] = []) {
+
+    }
+
+    nextItem() {
+        return this.items[this.currentIndex++];
+    }
+
+    reset() {
+        if (this.currentIndex == 0) {
+            this.items = [];
+        } else {
+            this.items.splice(0, this.currentIndex - 1)
+        }
+        this.currentIndex = 0;
+        console.log("Queue was reset", this);
     }
 }

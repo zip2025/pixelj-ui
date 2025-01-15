@@ -6,8 +6,11 @@ const emit = defineEmits<{
   (e: 'select', value: Media): void,
   (e: 'page', value: Page<Media>): void
 }>()
-const props = defineProps<{
+
+defineProps<{
   page: Page<Media>
+  showLeft?: boolean,
+  showRight?: boolean
 }>()
 
 const select = (media: Media) => {
@@ -31,13 +34,15 @@ const navigateRight = (p: Page<Media>) => {
 </script>
 
 <template>
-  <div class="cursor" style="" @click="navigateLeft(page)" role="navigation" title="navigate to previous page">
+  <div v-if="showLeft"
+      class="cursor" style="" @click="navigateLeft(page)" role="navigation" title="navigate to previous page">
     <i class="bi bi-chevron-compact-left bi-3x"></i>
   </div>
-  <div class="thumbnails" v-for="media in props.page.content">
+  <div class="thumbnails" v-for="media in page.content">
     <Thumbnail :value="media" @select="select"></Thumbnail>
   </div>
-  <div class="cursor" style="" @click="navigateRight(page)" role="navigation" title="navigate to next page">
+  <div v-if="showRight"
+      class="cursor" style="" @click="navigateRight(page)" role="navigation" title="navigate to next page">
     <i class="bi bi-chevron-compact-right bi-3x"></i>
   </div>
 </template>

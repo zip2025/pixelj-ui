@@ -1,12 +1,22 @@
 import 'bootstrap/dist/js/bootstrap';
 import './scss/main.scss'
-
-import { createApp } from 'vue'
+import {createApp} from 'vue'
+import {createRouter, createWebHistory} from 'vue-router'
 import App from './App.vue'
-import router from './utils/router'
+import RateView from "./components/RateView.vue";
+import PlayView from "./components/PlayView.vue";
 
 const app = createApp(App)
 
-app.use(router)
+const router = createRouter({
+    linkActiveClass: 'active',
+    history: createWebHistory(),
+    routes: [
+        {path: '/rate', component: RateView},
+        {path: '/play', component: PlayView},
+        {path: '/', redirect: '/rate'}
+    ],
+})
 
-app.mount('#app')
+app.use(router)
+app.mount("#app")

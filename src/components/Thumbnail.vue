@@ -34,7 +34,7 @@ watch(() => props.value, (oldValue, newValue) => {
 </script>
 
 <template>
-  <div class="thumbnail cursor" @click="select(value)">
+  <div class="thumbnail cursor" @click="select(props.value)">
     <div v-if="!showImage" class="text-center">
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>

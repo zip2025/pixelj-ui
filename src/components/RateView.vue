@@ -76,12 +76,13 @@
           </div>
         </div>
 
-        <div>
+        <div v-if="selectedMedia">
           <!-- Original Id -->
             <span class="badge rounded-pill text-bg-danger mb-2">
               <a target="_blank" class="text-bg-danger"
                  :href="'https://pr0gramm.com/new/' + selectedMedia.ref.id">id: {{ selectedMedia.ref.id }}</a>
             </span>
+            <span class="ms-2 font-monospace">{{selectedMedia.creationTime[0]}}-{{selectedMedia.creationTime[1]}}-{{selectedMedia.creationTime[2]}}</span>
           <!-- Tags -->
           <div class="d-flex flex-wrap gap-2">
             <span v-for="tag in selectedMedia.tags"
@@ -94,27 +95,7 @@
       </div>
 
       <div v-if="selectedMedia" class="media-content">
-        <a v-if="selectedMedia.source.fullsizeUrl != ''"
-           :href="'http://localhost:8080/api/media/' + selectedMedia.id + '/fullsize'"
-           target="_blank"
-           class="btn btn-link"
-           role="button"><i class="bi bi-cloud-download bi-3x"></i>
-        </a>
-        <video v-if="selectedMedia?.source.imageUrl.endsWith('.mp4')"
-               :key="selectedMedia.id"
-               class="item-image-actual"
-               draggable="true"
-               controls
-               height="100%"
-               width="auto"
-               loop autoplay
-               preload="auto">
-          <source :src="'http://localhost:8080/api/media/' + selectedMedia.id">
-        </video>
-        <img v-else :src="'http://localhost:8080/api/media/' + selectedMedia.id"
-             draggable="true"
-             style="max-height: 100%; width: auto; height: 100%"
-             alt="image of media">
+        <MediaComponent :media="selectedMedia" />
       </div>
     </div>
     <div v-if="selectedMedia" class="">
@@ -162,25 +143,15 @@
 </template>
 
 <style scoped>
-.media-content {
-  display: flex;
-  justify-content: center;
-  height: calc(100vh - 300px);
-  margin-top: 10px;
-  margin-bottom: 10px;
-  min-height: 100px;
-}
+
 </style>
 
 <script setup lang="ts">
 import {URLS} from "../utils/urls.ts";
 import {Cache, type Media, type Page, Vote} from "../utils/model.ts";
 import {onMounted, ref} from "vue";
-import {useRoute, useRouter} from "vue-router";
 import Thumbnails from "./Thumbnails.vue";
-
-const router = useRouter();
-const route = useRoute();
+import MediaComponent from "./MediaComponent.vue";
 
 const loading = ref<boolean>(true);
 const selectedIndex = ref();
@@ -226,16 +197,11 @@ const keyup = (event: any) => {
   }
 }
 
-// window.addEventListener("keyup", (e) => {
-//
-// });
-
 const pretty = (input: any) => {
   return JSON.stringify(input, null, 2);
 }
 
 const select = (media: Media) => {
-  // selectedMedia.value = null;
   selectedMedia.value = media;
   selectedIndex.value = page.value.content.indexOf(media);
 };
@@ -455,10 +421,12 @@ const reload = (consumer?: (page: Page<Media>) => void) => {
 const cache = new Cache<Media>(createQuery(filter.value));
 
 onMounted(() => {
-  router.isReady().then(() => {
-    if (route.path != '/') {
-      filter.value.id = route.path.substring(1)
-    }
+  // router.isReady().then(() => {
+    // TODO MVR this is no longer working
+    // if (route.path != '/rate') {
+    //   console.log(route.path)
+    //   filter.value.id = route.path.substring(1)
+    // }
     reload((page) => {
       if (!page.empty) {
         if (filter.value['id']) {
@@ -474,7 +442,7 @@ onMounted(() => {
         }
       }
     })
-  });
+  // });
 })
 
 </script>
