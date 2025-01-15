@@ -15,7 +15,7 @@
                @keyup.enter="event => addTag(event.target.value)">
         <div class="d-flex gap-2">
           <span v-for="filterTag in filter.tags">
-            {{filterTag}}
+            {{ filterTag }}
             <button class="btn btn-link btn-sm text-danger" @click="removeTag(filterTag)">X</button>
           </span>
         </div>
@@ -41,57 +41,13 @@
     <div id="media-container" tabindex="1" v-on:keyup="keyup" v-if="!page.empty">
       <div class="w-100 d-flex align-items-center">
         <Thumbnails :page="page" @select="select" @page="updatePage"/>
-
-        <div>
-          <!-- Rating -->
-          <div class="d-flex flex-row">
-            <div class="h2 p-0 d-flex gap-4 mx-4">
-              <span class="cursor"
-                    :class="{'text-primary': selectedMedia?.rating?.vote == 'UP'}"
-                    @click="upVote(selectedMedia!)">
-                <i class="bi bi-plus-circle bi-2x"></i>
-              </span>
-              <span class="cursor"
-                    :class="{'text-danger': selectedMedia?.rating?.favourite}"
-                    @click="markFav(selectedMedia!)">
-                <i class="bi bi-2x"
-                   :class="{'bi-heart-fill': selectedMedia?.rating?.favourite,'bi-heart': !selectedMedia?.rating?.favourite}"></i>
-              </span>
-              <span class="cursor"
-                    :class="{'text-primary': selectedMedia?.rating?.vote == 'DOWN'}"
-                    @click="downVote(selectedMedia!)">
-                <i class="bi bi-dash-circle bi-2x"></i>
-              </span>
-            </div>
-          </div>
-          <div class="d-flex justify-content-between mx-4">
-            <span class="cursor" @click="navigateLeft"><i class="bi bi-arrow-left bi-2x"></i></span>
-            <a v-if="selectedMedia.source.fullsizeUrl != ''"
-               :href="'http://localhost:8080/api/media/' + selectedMedia.id + '/fullsize'"
-               target="_blank"
-               class="btn btn-link"
-               role="button"><i class="bi bi-cloud-download bi-2x"></i>
-            </a>
-            <span class="cursor" @click="navigateRight"><i class="bi bi-arrow-right bi-2x"></i></span>
-          </div>
-        </div>
-
-        <div v-if="selectedMedia">
-          <!-- Original Id -->
-            <span class="badge rounded-pill text-bg-danger mb-2">
-              <a target="_blank" class="text-bg-danger"
-                 :href="'https://pr0gramm.com/new/' + selectedMedia.ref.id">id: {{ selectedMedia.ref.id }}</a>
-            </span>
-            <span class="ms-2 font-monospace">{{selectedMedia.creationTime[0]}}-{{selectedMedia.creationTime[1]}}-{{selectedMedia.creationTime[2]}}</span>
-          <!-- Tags -->
-          <div class="d-flex flex-wrap gap-2">
-            <span v-for="tag in selectedMedia.tags"
-                class="badge rounded-pill text-bg-secondary cursor" @click="addTag(tag.tag)">
-            {{ tag.tag }}
-          </span>
-          </div>
-        </div>
-
+        <MediaControls
+            v-if="selectedMedia"
+            :media="selectedMedia"
+            @left="navigateLeft"
+            @right="navigateRight"
+        />
+        <Tags v-if="selectedMedia" :media="selectedMedia" />
       </div>
 
       <div v-if="selectedMedia" class="media-content">
@@ -138,7 +94,7 @@
     </div>
     <div v-if="selectedMedia" class="bg-light">
       <pre class="text-sm">{{ pretty(selectedMedia) }}</pre>
-      </div>
+    </div>
   </div>
 </template>
 
@@ -147,11 +103,14 @@
 </style>
 
 <script setup lang="ts">
-import {URLS} from "../utils/urls.ts";
-import {Cache, type Media, type Page, Vote} from "../utils/model.ts";
 import {onMounted, ref} from "vue";
+import {URLS} from "../utils/urls.ts";
+import {Cache, type Media, type Page} from "../utils/model.ts";
 import Thumbnails from "./Thumbnails.vue";
 import MediaComponent from "./MediaComponent.vue";
+import Tags from "./Tags.vue";
+import MediaControls from "./MediaControls.vue";
+
 
 const loading = ref<boolean>(true);
 const selectedIndex = ref();
@@ -168,34 +127,34 @@ const page = ref<Page<Media>>({
   totalElements: 0
 });
 
-const keyup = (event: any) => {
-  if (loading.value) {
-    // Bail if we are still loading
-    return;
-  }
-  switch (event.key) {
-    case 'w':
-      if (selectedMedia.value) {
-        upVote(selectedMedia.value)
-      }
-      break;
-    case 's':
-      if (selectedMedia.value) {
-        downVote(selectedMedia.value)
-      }
-      break;
-    case 'f':
-      if (selectedMedia.value) {
-        markFav(selectedMedia.value)
-      }
-      break;
-    case 'a':
-      navigateLeft();
-      break;
-    case 'd':
-      navigateRight();
-  }
-}
+// const keyup = (event: any) => {
+//   if (loading.value) {
+//     // Bail if we are still loading
+//     return;
+//   }
+//   switch (event.key) {
+//     case 'w':
+//       if (selectedMedia.value) {
+//         upVote(selectedMedia.value)
+//       }
+//       break;
+//     case 's':
+//       if (selectedMedia.value) {
+//         downVote(selectedMedia.value)
+//       }
+//       break;
+//     case 'f':
+//       if (selectedMedia.value) {
+//         markFav(selectedMedia.value)
+//       }
+//       break;
+//     case 'a':
+//       navigateLeft();
+//       break;
+//     case 'd':
+//       navigateRight();
+//   }
+// }
 
 const pretty = (input: any) => {
   return JSON.stringify(input, null, 2);
@@ -205,51 +164,6 @@ const select = (media: Media) => {
   selectedMedia.value = media;
   selectedIndex.value = page.value.content.indexOf(media);
 };
-
-const upVote = (media: Media) => {
-  // Only upvote if not upvoted, otherwise reset to NONE
-  const newVote = media.rating?.vote == Vote.UP ? Vote.NONE : Vote.UP
-  patchVote(media, newVote)
-}
-
-const downVote = (media: Media) => {
-  // only downvote if not downvoted, otherwise reset to NONE
-  const newVote = media.rating?.vote == Vote.DOWN ? Vote.NONE : Vote.DOWN;
-  patchVote(media, newVote);
-}
-
-const markFav = (media: Media) => {
-  const fav = media.rating?.favourite ? !media.rating?.favourite : true
-  patchFav(media, fav)
-}
-
-const patchFav = (media: Media, fav: boolean) => {
-  const requestOptions = {
-    method: 'PATCH',
-    body: ''
-  };
-  fetch(`http://localhost:8080/api/media/${media.id}/vote?fav=${fav}`, requestOptions)
-      .then(result => result.json())
-      .then(rating => {
-        if (selectedMedia.value) {
-          selectedMedia.value.rating = rating;
-        }
-      });
-}
-
-const patchVote = (media: Media, vote: Vote) => {
-  const requestOptions = {
-    method: 'PATCH',
-    body: ''
-  };
-  fetch(`http://localhost:8080/api/media/${media.id}/vote?vote=${vote}`, requestOptions)
-      .then(result => result.json())
-      .then(rating => {
-        if (selectedMedia.value) {
-          selectedMedia.value.rating = rating;
-        }
-      });
-}
 
 const updatePage = (p: Page<Media>) => {
   page.value = p;
@@ -370,7 +284,7 @@ const resetPage = () => {
   reloadAndSelectFirst()
 }
 
-const createQuery = (filter: {[key: string] : any}): string => {
+const createQuery = (filter: { [key: string]: any }): string => {
   const params = new URLSearchParams()
   Object.keys(filter as any).forEach(key => {
     params.set(key, (filter as any)[key])

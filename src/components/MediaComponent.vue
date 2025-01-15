@@ -5,7 +5,8 @@ import {ref} from "vue";
 export type MediaComponentOptions = {
   loop?: boolean,
   autoplay?: boolean,
-  autoscale?: boolean
+  autoscale?: boolean,
+  showFullsizeIcon?: boolean
 }
 
 const props = defineProps<{
@@ -16,12 +17,13 @@ const props = defineProps<{
 const autoplay = ref(props.options?.autoplay ?? true);
 const loop = ref(props.options?.loop ?? true);
 const autoscale = ref(props.options?.autoscale ?? true);
+const showFullsizeIcon = ref(props.options?.showFullsizeIcon ?? false)
 
 </script>
 
 <template>
   <div :class="{'media-content': autoscale}">
-    <a v-if="media.source.fullsizeUrl != ''"
+    <a v-if="showFullsizeIcon && media.source.fullsizeUrl != ''"
        :href="'http://localhost:8080/api/media/' + media.id + '/fullsize'"
        target="_blank"
        class="btn btn-link"
