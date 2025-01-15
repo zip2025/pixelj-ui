@@ -12,7 +12,7 @@ const emits = defineEmits<{
   (e: 'clicked', value: MediaTag): void
 }>()
 
-const TAG_SIZE = 10;
+const TAG_SIZE = 5;
 const tags = ref<MediaTag[]>(props.media ? [...new Set(props.media.tags)] : []);
 const showAll = ref<boolean>(false);
 const hasMore = ref<boolean>(tags.value.length > TAG_SIZE);
@@ -50,10 +50,10 @@ const clicked = (tag: MediaTag) => {
     <!-- Tags -->
     <div class="d-flex flex-wrap gap-2">
       <Tag :value="tag.tag" v-for="(tag, index) in tags" @click="clicked(tag)"
-        :class="{'d-none': index > 5 && !showAll}"
+        :class="{'d-none': index > TAG_SIZE && !showAll}"
       />
       <span class="link-primary" v-if="hasMore && showAll" @click="showAll = !showAll" role="link">einklappen...</span>
-      <span class="link-primary" v-if="hasMore && !showAll" @click="showAll = !showAll" role="link">{{ tags.length - 5}} weitere anzeigen anzeigen</span>
+      <span class="link-primary" v-if="hasMore && !showAll" @click="showAll = !showAll" role="link">{{ tags.length - TAG_SIZE}} weitere anzeigen anzeigen</span>
     </div>
   </div>
 </template>

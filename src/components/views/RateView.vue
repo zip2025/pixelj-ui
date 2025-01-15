@@ -36,14 +36,19 @@ const keyup = (event: any) => {
     return;
   }
   switch (event.key) {
+    case 'x':
+      resetPage();
+      break
     case 'q':
       muted.value = !muted.value
       break
     case 'w':
       voteService.upVote(selectedMedia.value)
+        navigateRight()
       break;
     case 's':
       voteService.downVote(selectedMedia.value)
+      navigateRight()
       break;
     case 'f':
       voteService.markFav(selectedMedia.value)
