@@ -1,23 +1,30 @@
 <script setup lang="ts">
 import type {Media} from "../utils/model.ts";
-import {ref} from "vue";
+import {ref, watch} from "vue";
+import {isVideo} from "../utils/utils.ts";
 
 export type MediaComponentOptions = {
   loop?: boolean,
   autoplay?: boolean,
   autoscale?: boolean,
   showFullsizeIcon?: boolean
+  muted?: boolean
 }
 
 const props = defineProps<{
   media: Media,
-  options?: MediaComponentOptions,
+  options: MediaComponentOptions,
 }>();
 
 const autoplay = ref(props.options?.autoplay ?? true);
 const loop = ref(props.options?.loop ?? true);
 const autoscale = ref(props.options?.autoscale ?? true);
 const showFullsizeIcon = ref(props.options?.showFullsizeIcon ?? false)
+const muted = ref(props.options?.muted ?? true)
+
+watch (() => props.options?.muted, (newValue) => {
+  muted.value = newValue ?? false;
+})
 
 </script>
 
@@ -29,11 +36,16 @@ const showFullsizeIcon = ref(props.options?.showFullsizeIcon ?? false)
        class="btn btn-link"
        role="button"><i class="bi bi-cloud-download bi-3x"></i>
     </a>
+    <div v-if="isVideo(media)">
+      <i class="bi bi-volume-mute bi-4x" v-if="muted"></i>
+      <i class="bi bi-volume-up bi-4x" v-else></i>
+    </div>
     <video v-if="media.source.imageUrl.endsWith('.mp4')"
            :key="media.id"
            class="item-image-actual"
            draggable="true"
            controls
+           :muted="muted"
            height="100%"
            width="auto"
            :loop="loop"

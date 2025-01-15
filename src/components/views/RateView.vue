@@ -11,6 +11,7 @@ import {voteFn} from "../../utils/utils.ts";
 const loading = ref<boolean>(true);
 const selectedIndex = ref();
 const selectedMedia = ref<Media>();
+const muted = ref<boolean>(true);
 const filter = ref<MediaFilter>({
   vote: Vote.NONE,
   source_promoted: false
@@ -35,6 +36,9 @@ const keyup = (event: any) => {
     return;
   }
   switch (event.key) {
+    case 'q':
+      muted.value = !muted.value
+      break
     case 'w':
       voteService.upVote(selectedMedia.value)
       break;
@@ -204,6 +208,9 @@ const reload = (consumer?: (page: Page<Media>) => void) => {
       .finally(() => loading.value = false);
 }
 
+const toggleMute = () => {
+  muted.value = !muted.value;
+}
 
 const cache = new Cache<Media>(createQuery(filter.value));
 
@@ -222,6 +229,8 @@ onMounted(() => {
   <div class="container-fluid mx-2 mt-2" @keyup="keyup">
     <div class="d-flex gap-4 mb-2">
       <div class="d-flex gap-0">
+        <i class="bi bi-volume-mute bi-2x cursor" @click="toggleMute()" v-if="muted"></i>
+        <i class="bi bi-volume-up bi-2x cursor" @click="toggleMute()" v-if="!muted"></i>
         <button class="btn btn-sm btn-secondary" @click="toggleSourceFavourites()">Favourites (Source)</button>
         <button class="btn btn-sm btn-secondary" @click="togglePromoted()">{{filter.source_promoted ? 'New' : 'Top' }}</button>
         <button class="btn btn-sm btn-secondary" @click="toggleFavourites()">Favourites</button>
@@ -268,11 +277,11 @@ onMounted(() => {
             @left="navigateLeft"
             @right="navigateRight"
         />
-        <Tags v-if="selectedMedia" :media="selectedMedia"/>
+        <Tags v-if="selectedMedia" :media="selectedMedia" @clicked="addTag($event.tag)"/>
       </div>
 
       <div v-if="selectedMedia" class="media-content">
-        <MediaComponent :media="selectedMedia"/>
+        <MediaComponent :media="selectedMedia" :options="{muted: muted}"/>
       </div>
     </div>
   </div>
