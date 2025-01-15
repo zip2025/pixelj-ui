@@ -168,3 +168,11 @@ export class Queue {
         console.log("Queue was reset", this);
     }
 }
+
+export type MediaFilter = {
+    vote?: Vote,
+    favourites?: boolean,
+    source_favourite?: boolean,
+    source_promoted?: boolean
+    tags?: string[]
+}

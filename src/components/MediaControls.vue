@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import {type Media, Vote} from '../utils/model.ts'
+import {type Media} from '../utils/model.ts'
+import {voteFn} from '../utils/utils.ts'
 
 defineProps<{
       media?: Media,
@@ -18,50 +19,7 @@ const clickedRight = () => {
   emits('right')
 }
 
-const upVote = (media: Media) => {
-  // Only upvote if not upvoted, otherwise reset to NONE
-  const newVote = media.rating?.vote == Vote.UP ? Vote.NONE : Vote.UP
-  patchVote(media, newVote)
-}
-
-const downVote = (media: Media) => {
-  // only downvote if not downvoted, otherwise reset to NONE
-  const newVote = media.rating?.vote == Vote.DOWN ? Vote.NONE : Vote.DOWN;
-  patchVote(media, newVote);
-}
-
-const markFav = (media: Media) => {
-  const fav = media.rating?.favourite ? !media.rating?.favourite : true
-  patchFav(media, fav)
-}
-
-const patchFav = (media: Media, fav: boolean) => {
-  const requestOptions = {
-    method: 'PATCH',
-    body: ''
-  };
-  fetch(`http://localhost:8080/api/media/${media.id}/vote?fav=${fav}`, requestOptions)
-      .then(result => result.json())
-      .then(rating => {
-        if (media) {
-          media.rating = rating;
-        }
-      });
-}
-
-const patchVote = (media: Media, vote: Vote) => {
-  const requestOptions = {
-    method: 'PATCH',
-    body: ''
-  };
-  fetch(`http://localhost:8080/api/media/${media.id}/vote?vote=${vote}`, requestOptions)
-      .then(result => result.json())
-      .then(rating => {
-        if (media) {
-          media.rating = rating;
-        }
-      });
-}
+const voteService = voteFn();
 
 const open = (media: Media) => {
   window.open(`http://localhost:8080/api/media/${media.id}/fullsize`)
@@ -76,18 +34,18 @@ const open = (media: Media) => {
       <div class="h2 p-0 d-flex gap-4 mx-4">
               <span class="cursor"
                     :class="{'text-primary': media.rating?.vote == 'UP'}"
-                    @click="upVote(media!)">
+                    @click="voteService.upVote(media!)">
                 <i class="bi bi-plus-circle bi-2x"></i>
               </span>
         <span class="cursor"
               :class="{'text-danger': media?.rating?.favourite}"
-              @click="markFav(media!)">
+              @click="voteService.markFav(media!)">
                 <i class="bi bi-2x"
                    :class="{'bi-heart-fill': media?.rating?.favourite,'bi-heart': !media?.rating?.favourite}"></i>
               </span>
         <span class="cursor"
               :class="{'text-primary': media?.rating?.vote == 'DOWN'}"
-              @click="downVote(media!)">
+              @click="voteService.downVote(media!)">
                 <i class="bi bi-dash-circle bi-2x"></i>
               </span>
       </div>

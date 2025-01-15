@@ -1,50 +1,10 @@
-<template>
-  <div v-if="loading">LOADING....</div>
-  <div class="container-fluid mx-2 mt-2">
-    <div class="d-flex gap-4 mb-2">
-      <div class="d-flex gap-0">
-        <input type="text" @keyup.enter="event => updateTags(event.target.value)">
-        <button class="btn btn-primary" @click="refresh">reload</button>
-      </div>
-    </div>
-
-    Playback: {{activePlayback }}
-    Timer: {{ timer.active }}
-    Video: {{ video }}
-    Media: {{ activeMedia?.id}}
-
-    <div v-if="page.empty" class="">
-      Keine Ergebnisse
-    </div>
-
-    <div>
-      <i class="bi bi-play-fill bi-3x cursor" v-if="!activePlayback" @click="startPlay()"></i>
-      <i class="bi bi-pause-fill bi-3x cursor" v-if="activePlayback" @click="pausePlay()"></i>
-    </div>
-
-    <div id="media-container" tabindex="1" v-on:keyup="keyup" v-if="!page.empty">
-      <div class="w-100 d-flex align-items-center">
-        <Thumbnails :page="page" :showLeft="false" :showRight="false" @select="selectMedia($event)"/>
-      </div>
-    </div>
-
-    <div v-if="activeMedia">
-      <MediaComponent :media="activeMedia" :options="{loop: false}"/>
-    </div>
-  </div>
-</template>
-
-<style scoped>
-
-</style>
-
 <script setup lang="ts">
 import {nextTick, ref, watch, isProxy, toRaw} from "vue";
-import Thumbnails from "./Thumbnails.vue";
-import MediaComponent from "./MediaComponent.vue";
-import {createPage, type Media, type Page, Queue} from "../utils/model.ts";
-import {URLS} from "../utils/urls.ts";
-import {intervalFn, isVideo} from "../utils/utils.ts";
+import Thumbnails from "../Thumbnails.vue";
+import MediaComponent from "../MediaComponent.vue";
+import {createPage, type Media, type Page, Queue} from "../../utils/model.ts";
+import {URLS} from "../../utils/urls.ts";
+import {intervalFn, isVideo} from "../../utils/utils.ts";
 
 const loading = ref<boolean>(false);
 const activeMedia = ref<Media>();
@@ -148,3 +108,43 @@ watch(() => activeMedia.value, (newMedia, oldMedia) => {
 })
 
 </script>
+
+<template>
+  <div v-if="loading">LOADING....</div>
+  <div class="container-fluid mx-2 mt-2">
+    <div class="d-flex gap-4 mb-2">
+      <div class="d-flex gap-0">
+        <input type="text" @keyup.enter="event => updateTags(event.target.value)">
+        <button class="btn btn-primary" @click="refresh">reload</button>
+      </div>
+    </div>
+
+    Playback: {{activePlayback }}
+    Timer: {{ timer.active }}
+    Video: {{ video }}
+    Media: {{ activeMedia?.id}}
+
+    <div v-if="page.empty" class="">
+      Keine Ergebnisse
+    </div>
+
+    <div>
+      <i class="bi bi-play-fill bi-3x cursor" v-if="!activePlayback" @click="startPlay()"></i>
+      <i class="bi bi-pause-fill bi-3x cursor" v-if="activePlayback" @click="pausePlay()"></i>
+    </div>
+
+    <div id="media-container" tabindex="1" v-on:keyup="keyup" v-if="!page.empty">
+      <div class="w-100 d-flex align-items-center">
+        <Thumbnails :page="page" :showLeft="false" :showRight="false" @select="selectMedia($event)"/>
+      </div>
+    </div>
+
+    <div v-if="activeMedia">
+      <MediaComponent :media="activeMedia" :options="{loop: false}"/>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+
+</style>

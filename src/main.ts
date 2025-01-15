@@ -3,8 +3,8 @@ import './scss/main.scss'
 import {createApp} from 'vue'
 import {createRouter, createWebHistory} from 'vue-router'
 import App from './App.vue'
-import RateView from "./components/RateView.vue";
-import PlayView from "./components/PlayView.vue";
+import RateView from "./components/views/RateView.vue";
+import PlayView from "./components/views/PlayView.vue";
 
 const app = createApp(App)
 
