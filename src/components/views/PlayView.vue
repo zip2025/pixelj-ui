@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {nextTick, ref, watch, isProxy, toRaw} from "vue";
+import {isProxy, nextTick, ref, toRaw, watch} from "vue";
 import Thumbnails from "../Thumbnails.vue";
 import MediaComponent from "../MediaComponent.vue";
 import {createPage, type Media, type Page, Queue} from "../../utils/model.ts";
@@ -30,14 +30,19 @@ const selectMedia = (media: any) => {
   }
 }
 
-const timer = intervalFn(async () => {
-  if (queue.currentIndex == queue.items.length) {
-    await refresh() // load new entries when we are near the end
+const timer = intervalFn( () => {
+  const fn = () => {
+    const media = queue.nextItem();
+    activeMedia.value = media;
+    if (isVideo(media)) {
+      timer.pause();
+    }
   }
-  const media = queue.nextItem();
-  activeMedia.value = media;
-  if (isVideo(media)) {
-    timer.pause();
+  if (queue.currentIndex == queue.items.length) {
+    refresh() // load new entries when we are near the end
+        .then(fn)
+  } else {
+    fn();
   }
 });
 
@@ -91,14 +96,16 @@ const refresh = async () => {
       .finally(() => loading.value = false);
 }
 
-watch(() => activeMedia.value, (newMedia, oldMedia) => {
+watch(() => activeMedia.value, (newMedia) => {
   if (isVideo(newMedia)) {
     console.log("New media is video, adding listener next tick");
     nextTick(() => {
+      console.log("adding event listener to video and pausing any timer");
+      timer.pause()
       video.value = document.getElementsByTagName("video")[0]
       video.value.addEventListener("ended", () => {
         video.value.pause(); // in case we forgot to disable looping
-        if (activePlayback.value && !timer.active) {
+        if (activePlayback.value) {
           console.log("Video ended. Triggering next item in queue")
           setTimeout(() => timer.resume(true), 1000);
         }
@@ -112,28 +119,26 @@ watch(() => activeMedia.value, (newMedia, oldMedia) => {
 <template>
   <div v-if="loading">LOADING....</div>
   <div class="container-fluid mx-2 mt-2">
-    <div class="d-flex gap-4 mb-2">
-      <div class="d-flex gap-0">
+    <div class="d-flex gap-4">
+      <div>
+        <i class="bi bi-play-fill bi-3x cursor" v-if="!activePlayback" @click="startPlay()"></i>
+        <i class="bi bi-pause-fill bi-3x cursor" v-if="activePlayback" @click="pausePlay()"></i>
+      </div>
+      <div class="">
         <input type="text" @keyup.enter="event => updateTags(event.target.value)">
         <button class="btn btn-primary" @click="refresh">reload</button>
       </div>
+      <div>
+        Playback: {{activePlayback }}
+        Timer: {{ timer.active }}
+        Media Count: {{ page.totalElements }}
+      </div>
     </div>
-
-    Playback: {{activePlayback }}
-    Timer: {{ timer.active }}
-    Video: {{ video }}
-    Media: {{ activeMedia?.id}}
-
     <div v-if="page.empty" class="">
       Keine Ergebnisse
     </div>
 
-    <div>
-      <i class="bi bi-play-fill bi-3x cursor" v-if="!activePlayback" @click="startPlay()"></i>
-      <i class="bi bi-pause-fill bi-3x cursor" v-if="activePlayback" @click="pausePlay()"></i>
-    </div>
-
-    <div id="media-container" tabindex="1" v-on:keyup="keyup" v-if="!page.empty">
+    <div id="media-container mt-0" tabindex="1" v-on:keyup="keyup" v-if="!page.empty">
       <div class="w-100 d-flex align-items-center">
         <Thumbnails :page="page" :showLeft="false" :showRight="false" @select="selectMedia($event)"/>
       </div>
